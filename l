@@ -137,12 +137,11 @@ def print_cols(items):
         entry, mode, color, description = item[1:]
 
         if description:
-            text = "%s%-*s %s%s%s" % (REPO, longest_item + len(NONE),
-                                  entry + NONE + get_suffix(mode),
-                                  DESC, description, NONE)
-            text = text[0:screen_cols + len(REPO) + len(NONE)
-                        + len(DESC) + len(NONE)]
-            print text
+            text = "%s%-*s %s%s" % (REPO, longest_item,
+                                  entry + get_suffix(mode),
+                                  DESC, description)
+            text = text[0:screen_cols + len(REPO) + len(DESC)]
+            print text + NONE
 
             col = 0
             continue
