@@ -5,10 +5,24 @@ from glob import glob
 from stat import *
 import os
 
-RED = "\033[31;1m"
+REPO = "\033[95;1m"
+DESC = "\033[96m"
 BLUE = "\033[34;1m"
 NONE = "\033[0m"
-LS_COLORS='no=00:fi=00:di=01;34:ln=01;36:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:su=37;41:sg=30;43:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.gz=01;31:*.bz2=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.avi=01;35:*.fli=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.flac=01;35:*.mp3=01;35:*.mpc=01;35:*.ogg=01;35:*.wav=01;35:'
+
+LS_COLORS='no=00:fi=00:di=01;34:ln=01;36:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:su=37;41:sg=30;43:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.gz=01;31:*.bz2=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.avi=01;35:*.fli=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.flac=01;35:*.mp3=01;35:*.mpc=01;35:*.ogg=01;35:*.wav=01;35:*.java=92:'
+
+def get_screen_cols():
+    try:
+        import os
+        f = os.popen("tput cols")
+        n = int(f.read())
+        f.close()
+        return n
+    except:
+        return 80
+
+screen_cols = get_screen_cols()
 
 hidden_files = None
 
@@ -22,14 +36,16 @@ def git_info(repo):
         f.close()
 
         if desc == "Unnamed repository; edit this file to name it for gitweb.":
-            desc = ""
+            desc = "<Missing>"
 
-        f = os.popen("git-log --max-count=1 --pretty=medium", "r")
+        f = os.popen("git-log --max-count=1 --pretty=raw", "r")
 
         reading_comment = 0
         for line in f:
-            if line.startswith("Date:"):
-                date = line[5:].strip()
+            if line.startswith("author"):
+                date = int(line.split()[-2])
+                import time
+                date = time.strftime("%Y-%m-%d %H:%M", time.localtime(date))
             elif line == "\n":
                 reading_comment = 1
             elif reading_comment:
@@ -39,9 +55,11 @@ def git_info(repo):
         f.close()
 
         if len(desc) > 20:
-            desc = desc[:20] + "�"
+            desc = desc[:18] + "..."
+        else:
+            desc = "%-21s" % desc
 
-        return "%-20s %s — %s" % (desc, date, comment)
+        return "%s %s  %s" % (desc, date, comment)
     finally:
         os.chdir(oldwd)
 
@@ -106,17 +124,6 @@ for entry in glob("*"):
         except:
             stuff.append((1, entry, mode, color, ""))
 
-# print "%s%s%s — %s" % (RED, repo, NONE, description)
-
-def get_screen_cols():
-    import os
-    f = os.popen("tput cols")
-    n = int(f.read())
-    f.close()
-    return n
-
-screen_cols = get_screen_cols()
-
 def print_cols(items):
     items.sort()
     longest_item = max([len(x[1]) for x in items]) + 2
@@ -130,7 +137,13 @@ def print_cols(items):
         entry, mode, color, description = item[1:]
 
         if description:
-            print "%s%s%s%s — %s" % (RED, entry, NONE, get_suffix(mode), description)
+            text = "%s%-*s %s%s%s" % (REPO, longest_item + len(NONE),
+                                  entry + NONE + get_suffix(mode),
+                                  DESC, description, NONE)
+            text = text[0:screen_cols + len(REPO) + len(NONE)
+                        + len(DESC) + len(NONE)]
+            print text
+
             col = 0
             continue
 
