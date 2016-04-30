@@ -41,7 +41,7 @@ def git_info(repo):
         if desc.startswith("Unnamed repository"):
             desc = ""
 
-        f = os.popen("git-log --max-count=1 --pretty=raw", "r")
+        f = os.popen("git log --max-count=1 --pretty=raw . 2> /dev/null", "r")
 
         reading_comment = 0
         for line in f:
