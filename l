@@ -31,12 +31,15 @@ def git_info(repo):
         oldwd = os.getcwd()
         os.chdir(repo)
 
-        f = open(".git/description", "r")
-        desc = f.read().strip()
-        f.close()
+        try:
+            f = open(".git/description", "r")
+            desc = f.read().strip()
+            f.close()
+        except:
+            desc = ""
 
-        if desc == "Unnamed repository; edit this file to name it for gitweb.":
-            desc = "<Missing>"
+        if desc.startswith("Unnamed repository"):
+            desc = ""
 
         f = os.popen("git-log --max-count=1 --pretty=raw", "r")
 
